@@ -7,7 +7,7 @@
   let lastChoice = null;
 
   const profileMap = {
-    low:{fc:180,bw:100,v:28,duty:12},
+    low:{fc:150,bw:100,v:28,duty:12},
     mid:{fc:300,bw:180,v:24,duty:10},
     high:{fc:430,bw:120,v:18,duty:8}
   };
@@ -515,7 +515,7 @@
       $('#sal').value=35;
       $('#depth').value=600;
       $('#mission').value='range';
-      $('#range').value=300;
+      $('#range').value=200;
       $('#resolution').value=.5;
       $('#battery').value=220;
       $('#profile').value='low';
