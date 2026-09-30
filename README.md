@@ -146,6 +146,20 @@ The site will then be published at a URL similar to:
 https://<username>.github.io/AquaPulse/
 ```
 
+
+## Deploying on Vercel
+
+This project is a static HTML/CSS/JavaScript site and requires no build step.
+
+1. Import the GitHub repository `Ianxsh14/AquaPulse` into Vercel.
+2. Framework Preset: **Other**.
+3. Root Directory: repository root.
+4. Build Command: leave empty.
+5. Output Directory: leave empty.
+6. Deploy.
+
+Vercel will serve `index.html` directly. Future pushes to `main` can redeploy automatically.
+
 ## Project context
 
 AquaPulse is being developed for the Smart India Hackathon problem:
