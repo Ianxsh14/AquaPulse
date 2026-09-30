@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="AquaPulse adaptive sonar transmitter simulation for SIH." />
+  <title>AquaPulse Simulator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <div class="eyebrow">SIH • Adaptive Software-Defined Sonar</div>
+      <h1>AquaPulse Simulator</h1>
+      <p class="subtitle">Environment + Mission + Battery + Transducer Limits → Best Valid Waveform → Physical Output → Verification</p>
+    </div>
+    <div class="header-actions">
+      <button id="runBtn" class="primary">Run Optimizer</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="preset-row card">
+      <div>
+        <h2>Scenario presets</h2>
+        <p>Use presets for a quick demo, or tune every parameter manually.</p>
+      </div>
+      <div class="button-row">
+        <button data-preset="reef">Clear / High Resolution</button>
+        <button data-preset="range">Long Range</button>
+        <button data-preset="lowbat">Low Battery</button>
+        <button data-preset="fault">Inject Load Fault</button>
+      </div>
+    </section>
+
+    <section class="three-col">
+      <article class="card">
+        <h2>1. Environment & Mission</h2>
+        <p class="hint">Temperature, salinity and depth feed the acoustic model. Turbidity is only a secondary proxy.</p>
+
+        <label>Temperature <span id="tempOut">12 °C</span>
+          <input id="temp" type="range" min="2" max="30" step="0.5" value="12">
+        </label>
+        <label>Salinity <span id="salOut">35 PSU</span>
+          <input id="sal" type="range" min="25" max="40" step="0.5" value="35">
+        </label>
+        <label>Depth <span id="depthOut">100 m</span>
+          <input id="depth" type="range" min="0" max="2000" step="10" value="100">
+        </label>
+        <label>pH <span id="phOut">8.00</span>
+          <input id="ph" type="range" min="7.7" max="8.3" step="0.05" value="8.0">
+        </label>
+        <label>Turbidity proxy <span id="turbOut">10 NTU</span>
+          <input id="turb" type="range" min="0" max="100" step="1" value="10">
+        </label>
+        <label>Bubble / sea-state noise <span id="seaOut">2 dB</span>
+          <input id="sea" type="range" min="0" max="20" step="1" value="2">
+        </label>
+
+        <label>Mission mode
+          <select id="mission">
+            <option value="resolution">High Resolution</option>
+            <option value="balanced" selected>Balanced</option>
+            <option value="range">Long Range</option>
+            <option value="eco">Eco</option>
+          </select>
+        </label>
+
+        <label>Required range <span id="rangeOut">120 m</span>
+          <input id="range" type="range" min="10" max="500" step="5" value="120">
+        </label>
+        <label>Required range resolution <span id="resOut">0.20 m</span>
+          <input id="resolution" type="range" min="0.02" max="1" step="0.01" value="0.20">
+        </label>
+
+        <details>
+          <summary>Scenario assumptions</summary>
+          <div class="two-col compact">
+            <label>Full-scale source level* <input id="sl" type="number" min="140" max="230" value="190"></label>
+            <label>Noise level <input id="nl" type="number" min="20" max="120" value="70"></label>
+            <label>Target strength <input id="ts" type="number" min="-80" max="20" value="-25"></label>
+            <label>Directivity gain <input id="di" type="number" min="0" max="40" value="12"></label>
+            <label>Detection threshold <input id="dt" type="number" min="0" max="30" value="10"></label>
+          </div>
+          <p class="hint">*Scenario input only. A real acoustic source level requires calibrated transducer measurements.</p>
+        </details>
+      </article>
+
+      <article class="card">
+        <h2>2. Battery & Hardware Limits</h2>
+
+        <label>Remaining battery energy <span id="batteryOut">120 Wh</span>
+          <input id="battery" type="range" min="5" max="500" step="5" value="120">
+        </label>
+        <label>Reserved energy <span id="reserveOut">30 Wh</span>
+          <input id="reserve" type="range" min="0" max="150" step="5" value="30">
+        </label>
+        <label>Pings remaining <span id="pingsOut">20,000</span>
+          <input id="pings" type="range" min="100" max="100000" step="100" value="20000">
+        </label>
+
+        <div class="subcard">
+          <h3>Transducer profile</h3>
+          <label>Profile
+            <select id="profile">
+              <option value="low">Long-range narrowband</option>
+              <option value="mid" selected>Mid-band imaging</option>
+              <option value="high">High-resolution band</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <div class="two-col compact">
+            <label>Centre (kHz) <input id="tfc" type="number" min="100" max="500" value="300"></label>
+            <label>Usable BW (kHz) <input id="tbw" type="number" min="20" max="400" value="180"></label>
+            <label>Max drive (Vpk) <input id="tvolt" type="number" min="1" max="100" value="24"></label>
+            <label>Max duty (%) <input id="tduty" type="number" min="1" max="50" value="10"></label>
+          </div>
+        </div>
+
+        <div class="two-col compact">
+          <label>DAC rate (MS/s) <input id="dacrate" type="number" min="2" max="100" step="1" value="10"></label>
+          <label>DAC bits <input id="dacbits" type="number" min="8" max="16" step="1" value="10"></label>
+          <label>Driver efficiency (%) <input id="eff" type="number" min="20" max="98" step="1" value="82"></label>
+          <label>Load impedance (Ω) <input id="zload" type="number" min="5" max="500" step="1" value="60"></label>
+        </div>
+
+        <label class="check"><input id="preEQ" type="checkbox" checked> Enable analog-chain pre-equalization</label>
+        <label class="check"><input id="stability" type="checkbox" checked> EMA + hysteresis stability layer</label>
+      </article>
+
+      <article class="card result-card">
+        <div class="result-head">
+          <h2>3. Selected Ping</h2>
+          <span id="txStatus" class="badge">READY</span>
+        </div>
+        <p id="statusNote" class="hint">Run the optimizer to evaluate candidate waveforms.</p>
+
+        <div class="kpi-grid">
+          <div class="kpi"><span>Centre Frequency</span><strong id="kFc">—</strong></div>
+          <div class="kpi"><span>Bandwidth</span><strong id="kBw">—</strong></div>
+          <div class="kpi"><span>Pulse Duration</span><strong id="kDur">—</strong></div>
+          <div class="kpi"><span>Drive Level</span><strong id="kAmp">—</strong></div>
+        </div>
+
+        <div class="subcard metric-list">
+          <div><span>Waveform</span><strong id="kWave">—</strong></div>
+          <div><span>Window</span><strong id="kWindow">—</strong></div>
+          <div><span>Resolution</span><strong id="kResolution">—</strong></div>
+          <div><span>Samples / cycle</span><strong id="kSpc">—</strong></div>
+          <div><span>Energy / ping</span><strong id="kEnergy">—</strong></div>
+          <div><span>Range margin</span><strong id="kMargin">—</strong></div>
+        </div>
+
+        <div class="meter-wrap">
+          <div class="meter-label"><span>Energy budget used</span><span id="energyUsed">—</span></div>
+          <div class="meter"><span id="energyBar"></span></div>
+        </div>
+
+        <div class="subcard metric-list">
+          <div><span>Candidates</span><strong id="candAll">—</strong></div>
+          <div><span>Feasible</span><strong id="candOk">—</strong></div>
+          <div><span>Sound speed</span><strong id="kC">—</strong></div>
+          <div><span>Absorption</span><strong id="kAlpha">—</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>System flow</h2>
+      <div class="flow-grid">
+        <div>Environment + Mission + Battery + Transducer</div>
+        <div class="arrow">→</div>
+        <div>Constraint-first Waveform Optimizer</div>
+        <div class="arrow">→</div>
+        <div>DMA + DAC → Filter → Driver</div>
+      </div>
+      <div class="flow-grid secondary">
+        <div>Next-ping feedback</div>
+        <div class="arrow">←</div>
+        <div>V/I health + waveform verification</div>
+        <div class="arrow">←</div>
+        <div>RLC / BVD Load or Physical Output</div>
+      </div>
+    </section>
+
+    <section class="two-col">
+      <article class="card chart-card">
+        <h2>Generated waveform</h2>
+        <p class="hint">Windowed electrical waveform; display is downsampled for visualization.</p>
+        <canvas id="waveCanvas" width="900" height="300"></canvas>
+      </article>
+      <article class="card chart-card">
+        <h2>Chirp / instantaneous frequency</h2>
+        <p class="hint">Desired sweep plotted against the usable transducer band.</p>
+        <canvas id="freqCanvas" width="900" height="300"></canvas>
+      </article>
+    </section>
+
+    <section class="two-col">
+      <article class="card chart-card">
+        <h2>Analog-chain / transducer response</h2>
+        <p class="hint">Illustrative BVD-like resonant response. Pre-equalization reduces in-band droop within safe limits.</p>
+        <canvas id="responseCanvas" width="900" height="280"></canvas>
+      </article>
+      <article class="card chart-card">
+        <h2>Matched-filter pulse compression</h2>
+        <p class="hint">A longer LFM chirp is compressed to a narrow correlation peak. Width scales roughly with 1/B.</p>
+        <canvas id="pulseCanvas" width="900" height="280"></canvas>
+      </article>
+    </section>
+
+    <section class="two-col split-wide">
+      <article class="card chart-card">
+        <h2>Candidate-space result</h2>
+        <p class="hint">Each point is a feasible candidate after hard-limit checks. Higher score is better.</p>
+        <canvas id="candidateCanvas" width="1000" height="320"></canvas>
+      </article>
+      <article class="card">
+        <h2>Rejected candidates</h2>
+        <div id="rejectList" class="reject-list"></div>
+
+        <div class="subcard">
+          <h3>Decision explanation</h3>
+          <p id="decisionText">—</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="two-col">
+      <article class="card">
+        <div class="result-head">
+          <div>
+            <h2>Output verification & transducer health</h2>
+            <p class="hint">Electrical-loopback validation, not underwater acoustic validation.</p>
+          </div>
+          <button id="faultBtn">Inject Load Fault</button>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi"><span>Expected Z</span><strong id="zExp">—</strong></div>
+          <div class="kpi"><span>Measured Z</span><strong id="zMeas">—</strong></div>
+          <div class="kpi"><span>Amplitude Error</span><strong id="ampErr">—</strong></div>
+          <div class="kpi"><span>Health</span><strong id="health">—</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Feasibility gates</h2>
+        <table>
+          <tbody>
+            <tr><td>G1</td><td>Digital stream</td><td id="g1">—</td></tr>
+            <tr><td>G2</td><td>Analog chirp</td><td id="g2">—</td></tr>
+            <tr><td>G3</td><td>Adaptive selection</td><td id="g3">—</td></tr>
+            <tr><td>G4</td><td>Energy budget</td><td id="g4">—</td></tr>
+            <tr><td>G5</td><td>V/I feedback</td><td id="g5">—</td></tr>
+            <tr><td>G6</td><td>Pulse compression</td><td id="g6">—</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Model boundaries</h2>
+      <div class="three-col boundaries">
+        <div class="subcard">
+          <h3>Environment model</h3>
+          <p>Sound speed uses a Mackenzie-style equation. Absorption uses a simplified seawater model using frequency, temperature, salinity, depth and pH. This is an onboard decision simulation, not a full ray-tracing ocean model.</p>
+        </div>
+        <div class="subcard">
+          <h3>Range estimate</h3>
+          <p>Uses configurable source level, target strength, noise, directivity and threshold assumptions. Real range requires calibrated source level, actual transducer response, receiver performance and water testing.</p>
+        </div>
+        <div class="subcard">
+          <h3>Prototype claim</h3>
+          <p>The SIH bench system can validate waveform generation, hard constraints, DMA/DAC behavior, electrical energy, load health and pulse compression. Underwater acoustic performance remains a later tank/field validation step.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    AquaPulse • SIH Adaptive Sonar Transmitter Simulation
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
